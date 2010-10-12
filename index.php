@@ -4,6 +4,8 @@
 	<meta charset='utf-8'>
 	<title>Browser Breakout</title>
 	<style>
+		* { margin:0;padding:0; }
+	
 		#wrapper {
 			position:relative;
 			min-height:2000px;
