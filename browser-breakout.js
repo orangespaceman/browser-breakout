@@ -198,13 +198,6 @@ var browserBreakout = function() {
 			// condition : test all images are large enough to be worth using
 			if (imageWidth > 20 && imageHeight > 20) {
 
-				//debug(images[counter]);
-				//debug("comparing " + imageXStart + " > " + (visibleXStart + (paddleHeight*2)));
-				//debug("comparing " + imageYStart +" > " + (visibleYStart + (paddleHeight*2)));
-				//debug("comparing " + (imageXStart + imageWidth) + " < " + (visibleXEnd - (paddleHeight*2)));
-				//debug("comparing " + (imageYStart + imageHeight) + " < " + (visibleYEnd - (paddleHeight*2)));
-				//debugSpacer();
-
 				// condition : if image is within visible (& safe) viewable area, use it
 				if (
 					imageXStart  > visibleXStart + (paddleHeight*2) &&
@@ -219,7 +212,7 @@ var browserBreakout = function() {
 						'imageHeight' : imageHeight,
 						'image' : allImages[counter],
 						'state' : 1,
-						'opacity' : 0
+						'visible' : 0
 					});
 				}
 			}
@@ -341,7 +334,7 @@ var browserBreakout = function() {
 	
 		
 	/*
-	 * draw title
+	 * create titles
 	 */
 	drawTitle = function() {
 		if (!textBlocks.titleBlock) {
@@ -370,7 +363,7 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 * draw play now button
+	 * create play now text
 	 */
 	drawPlayNow = function() {
 		if (!textBlocks.playNow) {
@@ -386,7 +379,7 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 * draw top scores
+	 * create top scores
 	 */
 	drawTopScores = function() {
 		if (!textBlocks.lastScore) {
@@ -414,7 +407,7 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 * draw top scores
+	 * create in-game scores
 	 */
 	drawScore = function() {
 		if (!textBlocks.score) {
@@ -442,7 +435,7 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 * draw end message
+	 * create end message
 	 */
 	drawEndMessage = function() {
 		if (!textBlocks.youLost) {
@@ -459,7 +452,7 @@ var browserBreakout = function() {
 
 
 	/*
-	 * draw victory message
+	 * create victory message
 	 */
 	drawVictoryMessage = function() {
 		if (!textBlocks.youWon) {
@@ -476,7 +469,7 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 * draw no images message
+	 * create no images message
 	 */
 	drawNoImagesMessage = function() {
 		if (!textBlocks.noImages) {
@@ -493,7 +486,7 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 *
+	 * draw text blocks - called every time by the draw() loop
 	 */
 	drawBlocks = function() {
 		for (var i = textBlocksToAnimate.length - 1; i >= 0; i--){
@@ -503,24 +496,8 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 *
-	 */
-	resetBlocks = function() {
-		
-		// reset all blocks ready to be redrawn
-		for (var i = textBlocksToAnimate.length - 1; i >= 0; i--){
-			//textBlocks[textBlocksToAnimate[i]].resetBlocks();
-			//textBlocks[textBlocksToAnimate[i]] = null;
-			delete textBlocks[textBlocksToAnimate[i]];
-		};
-		
-		// remove text blocks that needed animating
-		textBlocksToAnimate = [];
-	},
-	
-	
-	/*
-	 *
+	 * Change the game state - 
+	 * resets blocks and game parameters
 	 */
 	updateGameState = function(state) {
 		drawBg();
@@ -533,6 +510,7 @@ var browserBreakout = function() {
 		ballDy = ballDyStart;
 		for (var i = images.length - 1; i >= 0; i--){
 			images[i].state = 1;
+			images[i].visible = 0;
 		}
 		imagesRemaining = imagesAcceptable;
 		debug('changed gameState to ' + state);
@@ -540,7 +518,23 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 * 
+	 * Remove all existing text 
+	 */
+	resetBlocks = function() {
+		
+		// reset all blocks ready to be redrawn
+		for (var i = textBlocksToAnimate.length - 1; i >= 0; i--){
+			delete textBlocks[textBlocksToAnimate[i]];
+		};
+		
+		// remove text blocks that needed animating
+		textBlocksToAnimate = [];
+	},
+	
+	
+	
+	/*
+	 * During the game, when a block has been hit, update the score
 	 */
 	updateScore = function() {
 		
@@ -557,10 +551,9 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 *
+	 * When the game is complete, check whether this is a high score
 	 */
 	updateHighScore = function() {
-		// set scores
 		lastScore = imagesAcceptable - imagesRemaining;
 		if (lastScore > topScore) {
 			topScore = lastScore;
@@ -605,25 +598,17 @@ var browserBreakout = function() {
 					ballDx = -ballDx;					
 				}
 				
+				
 				updateScore();
 				image.state = 0;
 			}
-			
 
-			// condition : fade images in to start
-			if (image.state == 1 && image.opacity < 1) {
-				image.opacity += 0.1;
-			}
-			
-			// condition : fade images out when hit
-			if (image.state == 0 && image.opacity > 0) {
-				image.opacity -= 0.1;
-			}
 			
 			// condition : if the still image exists, display it!
-			if (image.state == 1) {				
+			if (image.state == 1 && image.visible == 0) {				
 				drawContext.drawImage(image.image, image.imageXStart, image.imageYStart);
-			} else {
+				image.visible = 1;
+			} else if (image.state == 0 && image.visible == 1) {
 				drawContext.clearRect(image.imageXStart, image.imageYStart, image.imageWidth, image.imageHeight);
 				drawContext.fillStyle = "rgba(0, 0, 0, "+canvasTransparency+")";
 				drawRectangle(image.imageXStart, image.imageYStart, image.imageWidth, image.imageHeight);
@@ -633,7 +618,7 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 *
+	 * draw the ball
 	 */
 	drawBall = function() {
 
@@ -655,7 +640,7 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 * 
+	 * draw the four paddles around the edge
 	 */
 	drawPaddles = function() {
 		
@@ -1266,18 +1251,8 @@ var browserBreakout = function() {
 				var id = textBlocksToAnimate.indexOf(options.name);
 				if(id != -1 ) {
 					debug('finished drawing ' + options.textString);
-					//textBlocksToAnimate.splice(id, 1);
-					//resetBlocks();
 				} 
 			}
-		},
-		
-		
-		/*
-		 *
-		 */
-		resetBlocks = function(){
-			currentBlock = 0;
 		},
 		
 		
@@ -1313,9 +1288,8 @@ var browserBreakout = function() {
 		 */
 		return {
 			init: init,
-			drawBlocks: drawBlocks,
-			resetBlocks: resetBlocks
-		};	
+			drawBlocks: drawBlocks
+		};
 	};
 	
 	
