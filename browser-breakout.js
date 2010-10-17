@@ -46,7 +46,6 @@ var browserBreakout = function() {
 	 * text blocks
 	 */
 	textBlocks = {},
-	textBlocksToAnimate = [],
 	textAnimationTypes = ['default', 'vertical', 'horizontal', 'random', 'reverse'],
 	
 	/*
@@ -73,8 +72,9 @@ var browserBreakout = function() {
 	ballColour = "#FFFFFF",
 	ballXStart = ballX = 35,
 	ballYStart = ballY = 35,
-	ballDxStart = ballDx = 6,
-	ballDyStart = ballDy = 4,
+	ballDxStart = ballDx = 2,
+	ballDyStart = ballDy = 2,
+	ballVelocity = 3,
 	
 	/*
 	 * Paddle positions
@@ -124,7 +124,6 @@ var browserBreakout = function() {
 		debug("hideOverflow()");
 		
 		body = document.getElementsByTagName('body')[0];
-		//body.style.height = "100%";
 		body.style.overflow = "hidden";
 	},
 	
@@ -423,7 +422,7 @@ var browserBreakout = function() {
 		
 		if (!textBlocks.remaining) {
 			textBlocks.remaining = new CanvasLetters({
-				textString:"blocks remaining - " + imagesRemaining,
+				textString:"Blocks Remaining - " + imagesRemaining,
 				name:'remaining',
 				x: -25,
 				y: -25,
@@ -435,13 +434,13 @@ var browserBreakout = function() {
 	
 	
 	/*
-	 * create end message
+	 * create game end message
 	 */
-	drawEndMessage = function() {
-		if (!textBlocks.youLost) {
-			textBlocks.youLost = new CanvasLetters({
-				textString:"You Lost",
-				name:'youLost',
+	drawLoseMessage = function() {
+		if (!textBlocks.loseMessage) {
+			textBlocks.loseMessage = new CanvasLetters({
+				textString:'You Lose',
+				name:'loseMessage',
 				x: -25,
 				y: 25,
 				blockSize: 5,
@@ -449,16 +448,16 @@ var browserBreakout = function() {
 			});
 		}
 	},
-
-
+	
+	
 	/*
-	 * create victory message
+	 * create game end message
 	 */
-	drawVictoryMessage = function() {
-		if (!textBlocks.youWon) {
-			textBlocks.youWon = new CanvasLetters({
-				textString:"You Won!",
-				name:'youWon',
+	drawWinMessage = function() {
+		if (!textBlocks.winMessage) {
+			textBlocks.winMessage = new CanvasLetters({
+				textString:'You Win!',
+				name:'winMessage',
 				x: -25,
 				y: 25,
 				blockSize: 5,
@@ -489,8 +488,10 @@ var browserBreakout = function() {
 	 * draw text blocks - called every time by the draw() loop
 	 */
 	drawBlocks = function() {
-		for (var i = textBlocksToAnimate.length - 1; i >= 0; i--){
-			textBlocks[textBlocksToAnimate[i]].drawBlocks();
+		for (textBlock in textBlocks){
+			if (textBlocks[textBlock].isActive()) {
+				textBlocks[textBlock].drawBlocks();
+			}
 		};
 	},
 	
@@ -500,18 +501,51 @@ var browserBreakout = function() {
 	 * resets blocks and game parameters
 	 */
 	updateGameState = function(state) {
+		
+		// reset game state
 		drawBg();
-		resetBlocks();
+		removeAllText();
 		updateHighScore();
 		gameState = state;
 		ballX = ballXStart + visibleXStart;
 		ballY = ballYStart + visibleYStart;
 		ballDx = ballDxStart;
 		ballDy = ballDyStart;
+		
+		// reset images
 		for (var i = images.length - 1; i >= 0; i--){
 			images[i].state = 1;
 			images[i].visible = 0;
 		}
+		
+		// reset text
+		if (state != 'running') {
+			textBlocks.titleBlock.setActiveVal(1);
+			textBlocks.subTitleBlock.setActiveVal(1);
+			textBlocks.lastScore.updateString("Last score - " + lastScore);
+			textBlocks.topScore.updateString("Top score - " + topScore);
+			
+			// condition : show optional extra message
+			if (state == 'noImages') {
+				if (!!textBlocks.noImages) {
+					textBlocks.noImages.setActiveVal(1);
+				}
+			} else if (state == 'gameEnded') {
+				if (!!textBlocks.loseMessage) {
+					textBlocks.loseMessage.setActiveVal(1);
+				}
+			} else if (state == 'victory') {
+				if (!!textBlocks.winMessage) {
+					textBlocks.winMessage.setActiveVal(1);
+				}
+			}
+		} else {
+			if (!!textBlocks.score && !!textBlocks.remaining) {
+				textBlocks.score.updateString("Score - " + (imagesAcceptable - imagesRemaining));
+				textBlocks.remaining.updateString("Blocks Remaining - " + imagesRemaining);
+			}
+		}
+		
 		imagesRemaining = imagesAcceptable;
 		debug('changed gameState to ' + state);
 	},
@@ -520,15 +554,12 @@ var browserBreakout = function() {
 	/*
 	 * Remove all existing text 
 	 */
-	resetBlocks = function() {
+	removeAllText = function() {
 		
 		// reset all blocks ready to be redrawn
-		for (var i = textBlocksToAnimate.length - 1; i >= 0; i--){
-			delete textBlocks[textBlocksToAnimate[i]];
-		};
-		
-		// remove text blocks that needed animating
-		textBlocksToAnimate = [];
+		for (textBlock in textBlocks){
+			textBlocks[textBlock].setActiveVal(0);
+		}
 	},
 	
 	
@@ -544,9 +575,8 @@ var browserBreakout = function() {
 		drawContext.fillRect(0, visibleYEnd-60, visibleWidth, 60-paddleHeight);
 
 		imagesRemaining--;
-		delete textBlocks.score;
-		delete textBlocks.remaining;
-		drawScore();
+		textBlocks.score.updateString("Score - " + (imagesAcceptable - imagesRemaining));
+		textBlocks.remaining.updateString("Blocks Remaining - " + imagesRemaining);
 	},
 	
 	
@@ -607,7 +637,6 @@ var browserBreakout = function() {
 			// condition : if the still image exists, display it!
 			if (image.state == 1 && image.visible == 0) {				
 				drawContext.drawImage(image.image, image.imageXStart, image.imageYStart);
-				image.visible = 1;
 			} else if (image.state == 0 && image.visible == 1) {
 				drawContext.clearRect(image.imageXStart, image.imageYStart, image.imageWidth, image.imageHeight);
 				drawContext.fillStyle = "rgba(0, 0, 0, "+canvasTransparency+")";
@@ -622,16 +651,14 @@ var browserBreakout = function() {
 	 */
 	drawBall = function() {
 
-		// clear last ball
-		drawContext.clearRect(ballX-ballRadius, ballY-ballRadius, ballRadius*3, ballRadius*3);
-		drawContext.fillStyle = "rgba(0, 0, 0, "+canvasTransparency+")";
-		drawContext.fillRect(ballX-ballRadius, ballY-ballRadius, ballRadius*3, ballRadius*3);
-
+		if (ballDx >= 0 && ballDx < 1) { ballDx = 1; }
+		if (ballDx < 0 && ballDx > -1) { ballDx = -1; }
+		if (ballDy >= 0 && ballDy < 1) { ballDy = 1; }
+		if (ballDy < 0 && ballDy > -1) { ballDy = -1; }
 
 		// set new ball position
-		ballX += ballDx;
-		ballY += ballDy;
-		
+		ballX += ballVelocity * ballDx;
+		ballY += ballVelocity * ballDy;
 		
 		// draw new ball
 		drawContext.fillStyle = ballColour;
@@ -680,21 +707,19 @@ var browserBreakout = function() {
 		// calculate bottom paddle hit detection
 		if (ballY + ballDy + ballRadius > visibleYEnd - paddleHeight) {
 			if (ballX > visibleXStart + paddleX && ballX < visibleXStart + paddleX + paddleWidth) {
-				debug("Bottom Paddle Hit");
-				//ballDx = 8 * ((ballX - (paddleX + paddleWidth / 2)) / paddleWidth);
-				//ballDx = -ballDx;
+				ballDx = 8 * ((ballX - (paddleX + visibleXStart + paddleWidth / 2)) / paddleWidth);
 				ballDy = -ballDy;
+				debug("Bottom Paddle Hit - Dx: " + ballDx + "; Dy: " + ballDy);
 			}
 		}
 		
 		
 		// calculate top paddle hit detection
-		if (ballY - ballRadius < visibleYStart + paddleHeight) {
+		if (ballY + ballDy - ballRadius < visibleYStart + paddleHeight) {
 			if (ballX > visibleXStart + paddleX && ballX < visibleXStart + paddleX + paddleWidth) {
-				debug("Top Paddle Hit");
-				//ballDx = 8 * ((ballX - (paddleX + paddleWidth / 2)) / paddleWidth);
-				//ballDx = -ballDx;
+				ballDx = 8 * ((ballX - (paddleX + visibleXStart + paddleWidth / 2)) / paddleWidth);
 				ballDy = -ballDy;
+				debug("Top Paddle Hit - Dx: " + ballDx + "; Dy: " + ballDy);				
 			}
 		}
 		
@@ -702,21 +727,19 @@ var browserBreakout = function() {
 		// calculate right paddle hit detection
 		if (ballX + ballDx + ballRadius > visibleXEnd - paddleHeight) {
 			if (ballY > visibleYStart + paddleY && ballY < visibleYStart + paddleY + paddleWidth) {
-				debug("Right Paddle Hit");
-				//ballDy = 8 * ((ballY - (paddleY + paddleWidth / 2)) / paddleWidth);
-				//ballDy = -ballDy;
+				ballDy = 8 * ((ballY - (paddleY + visibleYStart + paddleWidth / 2)) / paddleWidth);
 				ballDx = -ballDx;
+				debug("Right Paddle Hit: " + ballDx + "; Dy: " + ballDy);
 			}
 		}
 		
 		
 		// calculate left paddle hit detection
-		if (ballX - ballRadius < visibleXStart + paddleHeight) {
+		if (ballX + ballDx - ballRadius < visibleXStart + paddleHeight) {
 			if (ballY > visibleYStart + paddleY && ballY < visibleYStart + paddleY + paddleWidth) {
-				debug("Left Paddle Hit");
-				//ballDy = 8 * ((ballY - (paddleY + paddleWidth / 2)) / paddleWidth);
-				//ballDy = -ballDy;
+				ballDy = 8 * ((ballY - (paddleY + visibleYStart + paddleWidth / 2)) / paddleWidth);
 				ballDx = -ballDx;
+				debug("Left Paddle Hit: " + ballDx + "; Dy: " + ballDy);				
 			}
 		}
 		
@@ -770,7 +793,7 @@ var browserBreakout = function() {
 				
 				// bg is faded in, show title screen
 				} else {
-				
+					
 					// show title
 					drawTitle();
 				
@@ -787,12 +810,12 @@ var browserBreakout = function() {
 					// condition : if we've just lost, show message
 					if (gameState == 'gameEnded') {
 					
-						drawEndMessage();
+						drawLoseMessage();
 				
 					// show VICTORY message	
 					} else if (gameState == 'victory') {
 					
-						drawVictoryMessage();
+						drawWinMessage();
 					
 					// show NO IMAGES message	
 					} else if (gameState == 'noImages') {
@@ -807,15 +830,17 @@ var browserBreakout = function() {
 			
 			// game is in progress?
 			case 'running' : 
+			
+				drawBg();
 				
+				// draw ball
+				drawBall();
+
 				// draw score
 				drawScore();
 
 				// draw images
 				drawImages();
-
-				// draw ball
-				drawBall();
 								
 				// draw paddles
 				drawPaddles();
@@ -1038,6 +1063,7 @@ var browserBreakout = function() {
 			ordering : 'default',
 			animate : false,
 			name : null,
+			active : 1,
 			x : 0,
 			y : 0
 		},
@@ -1060,6 +1086,36 @@ var browserBreakout = function() {
 					options[option] = defaults[option];
 				}
 			}
+		},
+		
+		
+		/*
+		 * condition : is this textBlock active?
+		 */
+		isActive = function() {
+			return options.active;
+		},
+		
+		
+		/*
+		 * condition : is this textBlock active?
+		 */
+		setActiveVal = function(val) {
+			options.active = val;
+			if (!!options.animate) {
+				currentBlock = 0;
+			}
+		},
+		
+		
+		/*
+		 * condition : redraw new string
+		 */
+		updateString = function(str) {
+			debug('updateString');
+			options.textString = str;
+			setActiveVal(1);
+			startLetters();
 		},
 
 
@@ -1095,7 +1151,9 @@ var browserBreakout = function() {
 			}
 
 			// add this into the queue of text to be drawn
-			textBlocksToAnimate.push(options.name);
+			if (!!textBlocks['options.name']) {
+				textBlocks['options.name'].setActiveVal(1);
+			}
 			debug('adding ' + options.name + ' to queue');
 		},
 
@@ -1248,10 +1306,7 @@ var browserBreakout = function() {
 			if (currentBlock == blockCount+10) {
 				
 				// remove this from the queue of to be drawn
-				var id = textBlocksToAnimate.indexOf(options.name);
-				if(id != -1 ) {
-					debug('finished drawing ' + options.textString);
-				} 
+				debug('finished drawing ' + options.textString);
 			}
 		},
 		
@@ -1288,7 +1343,10 @@ var browserBreakout = function() {
 		 */
 		return {
 			init: init,
-			drawBlocks: drawBlocks
+			isActive : isActive,
+			setActiveVal : setActiveVal,
+			drawBlocks: drawBlocks,
+			updateString: updateString
 		};
 	};
 	

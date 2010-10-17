@@ -51,9 +51,9 @@
 		<h1>Browser Breakout!</h1>
 		<p><span id="bb-go">Go!</span></p>
 		<?php
-			for ($counter=0; $counter < 25; $counter++) { 
+			for ($counter=0; $counter < 50; $counter++) { 
 				echo '
-					<img src="./placeholder/'.rand(1, 200).'-'.rand(1, 200).'-ff9900-cccccc/" alt="{...}" style="left:'.rand(1, 900).'px;top:'.rand(1, 2000).'px;" />
+					<img src="./placeholder/'.rand(1, 200).'-'.rand(1, 200).'-ff9900-cccccc/" alt="{...}" style="left:'.rand(1, 900).'px;top:'.rand(1, 1500).'px;" />
 				';
 			}
 		?>
