@@ -953,6 +953,12 @@ var browserBreakout = function() {
 			if (e.keyCode == 40 || e.keyCode == 38 || e.keyCode == 39 || e.keyCode == 37) {
 				return false;
 			}
+			
+			// escape or X - remove canvas
+			if (e.keyCode == 27 || e.keyCode == 120) {
+				canvas.parentNode.removeChild(canvas);
+				//return false;
+			}	
 		};
 		
 		
