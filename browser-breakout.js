@@ -124,7 +124,7 @@ var browserBreakout = function() {
 		debug("hideOverflow()");
 		
 		body = document.getElementsByTagName('body')[0];
-		body.style.maxHeight = "100%";
+		//body.style.maxHeight = "100%";
 		body.style.overflow = "hidden";
 	},
 	
@@ -569,12 +569,6 @@ var browserBreakout = function() {
 	 * During the game, when a block has been hit, update the score
 	 */
 	updateScore = function() {
-		
-		// clear last score
-		drawContext.clearRect(0, visibleYEnd-60, visibleWidth, 60-paddleHeight);
-		drawContext.fillStyle = "rgba(0, 0, 0, "+canvasTransparency+")";
-		drawContext.fillRect(0, visibleYEnd-60, visibleWidth, 60-paddleHeight);
-
 		imagesRemaining--;
 		textBlocks.score.updateString("Score - " + (imagesAcceptable - imagesRemaining));
 		textBlocks.remaining.updateString("Blocks Remaining - " + imagesRemaining);
@@ -636,13 +630,9 @@ var browserBreakout = function() {
 
 			
 			// condition : if the still image exists, display it!
-			if (image.state == 1 && image.visible == 0) {				
+			if (image.state == 1) {				
 				drawContext.drawImage(image.image, image.imageXStart, image.imageYStart);
-			} else if (image.state == 0 && image.visible == 1) {
-				drawContext.clearRect(image.imageXStart, image.imageYStart, image.imageWidth, image.imageHeight);
-				drawContext.fillStyle = "rgba(0, 0, 0, "+canvasTransparency+")";
-				drawRectangle(image.imageXStart, image.imageYStart, image.imageWidth, image.imageHeight);
-			}
+			} 
 		};
 	},
 	
