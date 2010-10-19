@@ -108,7 +108,7 @@ var browserBreakout = function() {
 	/*
 	 * Display debug messages?
 	 */
-	debugMode = true,	
+	debugMode = false,	
 	
 	/*
 	 * Debug timeout
@@ -124,6 +124,7 @@ var browserBreakout = function() {
 		debug("hideOverflow()");
 		
 		body = document.getElementsByTagName('body')[0];
+		body.style.maxHeight = "100%";
 		body.style.overflow = "hidden";
 	},
 	
@@ -650,15 +651,17 @@ var browserBreakout = function() {
 	 * draw the ball
 	 */
 	drawBall = function() {
-
-		if (ballDx >= 0 && ballDx < 1) { ballDx = 1; }
-		if (ballDx < 0 && ballDx > -1) { ballDx = -1; }
-		if (ballDy >= 0 && ballDy < 1) { ballDy = 1; }
-		if (ballDy < 0 && ballDy > -1) { ballDy = -1; }
+		
+		// condition : adjust velocity for slow-moving ball
+		var v = ballVelocity;
+		if (Math.abs(ballDx) < 1 || Math.abs(ballDy) < 1) { v +=1; }
+		if (Math.abs(ballDx) < 1 && Math.abs(ballDy) < 1) { v +=1; }
+		if (Math.abs(ballDx) < 0.75 && Math.abs(ballDy) < 0.75) { v +=1; }
+		if (Math.abs(ballDx) < 0.5 && Math.abs(ballDy) < 0.5) { v +=1; }
 
 		// set new ball position
-		ballX += ballVelocity * ballDx;
-		ballY += ballVelocity * ballDy;
+		ballX += v * ballDx;
+		ballY += v * ballDy;
 		
 		// draw new ball
 		drawContext.fillStyle = ballColour;
@@ -673,17 +676,22 @@ var browserBreakout = function() {
 		
 		// calculate whether to move paddles
 		if (rightDown) {
-			paddleX += 5;	
+			paddleX += 20;	
 		} else if (leftDown) {
-			paddleX -= 5;
+			paddleX -= 20;
 		}
 		
 		if (downDown) {
-			paddleY += 5;	
+			paddleY += 20;	
 		} else if (upDown) {
-			paddleY -= 5;
+			paddleY -= 20;
 		}
 		
+		if (paddleX < 0) { paddleX = 0; }	//left
+		if (paddleX > visibleWidth-paddleWidth) { paddleX=visibleWidth-paddleWidth; }	// right
+		if (paddleY < 0) { paddleY = 0; }	// top
+		if (paddleY > visibleHeight-paddleWidth) { paddleY=visibleHeight-paddleWidth; }	// bottom
+				
 
 		drawContext.fillStyle = "rgba(0, 0, 0, "+canvasTransparency+")";
 
@@ -707,7 +715,7 @@ var browserBreakout = function() {
 		// calculate bottom paddle hit detection
 		if (ballY + ballDy + ballRadius > visibleYEnd - paddleHeight) {
 			if (ballX > visibleXStart + paddleX && ballX < visibleXStart + paddleX + paddleWidth) {
-				ballDx = 8 * ((ballX - (paddleX + visibleXStart + paddleWidth / 2)) / paddleWidth);
+				ballDx = 5 * ((ballX - (paddleX + visibleXStart + paddleWidth / 2)) / paddleWidth);
 				ballDy = -ballDy;
 				debug("Bottom Paddle Hit - Dx: " + ballDx + "; Dy: " + ballDy);
 			}
@@ -717,7 +725,7 @@ var browserBreakout = function() {
 		// calculate top paddle hit detection
 		if (ballY + ballDy - ballRadius < visibleYStart + paddleHeight) {
 			if (ballX > visibleXStart + paddleX && ballX < visibleXStart + paddleX + paddleWidth) {
-				ballDx = 8 * ((ballX - (paddleX + visibleXStart + paddleWidth / 2)) / paddleWidth);
+				ballDx = 5 * ((ballX - (paddleX + visibleXStart + paddleWidth / 2)) / paddleWidth);
 				ballDy = -ballDy;
 				debug("Top Paddle Hit - Dx: " + ballDx + "; Dy: " + ballDy);				
 			}
@@ -727,7 +735,7 @@ var browserBreakout = function() {
 		// calculate right paddle hit detection
 		if (ballX + ballDx + ballRadius > visibleXEnd - paddleHeight) {
 			if (ballY > visibleYStart + paddleY && ballY < visibleYStart + paddleY + paddleWidth) {
-				ballDy = 8 * ((ballY - (paddleY + visibleYStart + paddleWidth / 2)) / paddleWidth);
+				ballDy = 5 * ((ballY - (paddleY + visibleYStart + paddleWidth / 2)) / paddleWidth);
 				ballDx = -ballDx;
 				debug("Right Paddle Hit: " + ballDx + "; Dy: " + ballDy);
 			}
@@ -737,7 +745,7 @@ var browserBreakout = function() {
 		// calculate left paddle hit detection
 		if (ballX + ballDx - ballRadius < visibleXStart + paddleHeight) {
 			if (ballY > visibleYStart + paddleY && ballY < visibleYStart + paddleY + paddleWidth) {
-				ballDy = 8 * ((ballY - (paddleY + visibleYStart + paddleWidth / 2)) / paddleWidth);
+				ballDy = 5 * ((ballY - (paddleY + visibleYStart + paddleWidth / 2)) / paddleWidth);
 				ballDx = -ballDx;
 				debug("Left Paddle Hit: " + ballDx + "; Dy: " + ballDy);				
 			}
@@ -928,6 +936,15 @@ var browserBreakout = function() {
 		};
 		document.onclick = function(e) {
 			onMouseClick(e);
+		};
+		document.onkeypress = function(e) {
+			onMouseClick(e);
+			
+			// stop browser scrolling on click
+			if (!e) { e = window.event; }
+			if (e.keyCode == 40 || e.keyCode == 38 || e.keyCode == 39 || e.keyCode == 37) {
+				return false;
+			}
 		};
 		
 		
