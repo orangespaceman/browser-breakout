@@ -410,6 +410,23 @@ var browserBreakout = function() {
 			textBlocks.topScore = new CanvasLetters({
 				textString:'Top score - ' + topScore,
 				name:'topScore',
+				x: 25,
+				y: -50,
+				blockSize: 2,
+				clearance: 2
+			});
+		}
+	},
+	
+	
+	/*
+	 * create creds
+	 */
+	drawCreds = function() {
+		if (!textBlocks.creds) {
+			textBlocks.creds = new CanvasLetters({
+				textString:'petegoodman.com',
+				name:'creds',
 				x: -25,
 				y: -25,
 				blockSize: 2,
@@ -536,6 +553,7 @@ var browserBreakout = function() {
 		if (state != 'running') {
 			textBlocks.titleBlock.setActiveVal(1);
 			textBlocks.subTitleBlock.setActiveVal(1);
+			textBlocks.creds.setActiveVal(1);
 			textBlocks.lastScore.updateString('Last score - ' + lastScore);
 			textBlocks.topScore.updateString('Top score - ' + topScore);
 			
@@ -797,6 +815,9 @@ var browserBreakout = function() {
 				
 					// display scores
 					drawTopScores();
+					
+					// display creds
+					drawCreds();
 					
 					// draw above text
 					drawBlocks();
