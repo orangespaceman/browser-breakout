@@ -69,7 +69,7 @@ var browserBreakout = function() {
 	 * Ball positions
 	 */
 	ballRadius = 7,
-	ballColour = "#FFFFFF",
+	ballColour = '#FFFFFF',
 	ballXStart = ballX = 35,
 	ballYStart = ballY = 35,
 	ballDxStart = ballDx = 2,
@@ -79,7 +79,7 @@ var browserBreakout = function() {
 	/*
 	 * Paddle positions
 	 */
-	paddleColour = "#FFFFFF",
+	paddleColour = '#FFFFFF',
 	paddleX = 0,
 	paddleY = 0,
 	paddleHeight = 10,
@@ -121,11 +121,12 @@ var browserBreakout = function() {
 	 */
 	hideOverflow = function() {
 		
-		debug("hideOverflow()");
+		debug('hideOverflow()');
 		
 		body = document.getElementsByTagName('body')[0];
-		//body.style.maxHeight = "100%";
-		body.style.overflow = "hidden";
+//		body.style.height = '100%';
+//		body.style.width = '100%';
+		body.style.overflow = 'hidden';
 	},
 	
 	
@@ -134,23 +135,32 @@ var browserBreakout = function() {
 	 */
 	createCanvas = function() {
 		
-		debug("createCanvas()");
+		debug('createCanvas()');
 		
 		// create canvas
 		canvas = document.createElement('canvas');
-		canvas.id = "canvas";
-		canvas.width = document.body.offsetWidth;
-		canvas.height = document.body.offsetHeight;
-		canvas.style.position = "absolute";
+		canvas.id = 'canvas';
+		canvas.style.position = 'absolute';
 		canvas.style.zIndex = 10000000; // hopefully that's high enough...
-		canvas.style.left = 0;
-		canvas.style.top = 0;
+		
+		setCanvasPosition();
 		
 		// add the canvas into the page
 		body.appendChild(canvas);
 		
 		// get the draw context
-		drawContext = canvas.getContext("2d");
+		drawContext = canvas.getContext('2d');
+	},
+	
+	
+	/*
+	 * position canvas within visible portion of the screen
+	 */
+	setCanvasPosition = function() {
+		canvas.width = visibleWidth;
+		canvas.height = visibleHeight;
+		canvas.style.left = visibleXStart + 'px';
+		canvas.style.top = visibleYStart + 'px';
 	},
 	
 	
@@ -160,11 +170,13 @@ var browserBreakout = function() {
 	calculatePositions = function() {
 
 		visibleXStart = window.pageXOffset;
-		visibleXEnd = document.documentElement.clientWidth + visibleXStart;
 		visibleYStart = window.pageYOffset;
-		visibleYEnd = document.documentElement.clientHeight + visibleYStart;
-		visibleWidth = visibleXEnd - visibleXStart;
-		visibleHeight = visibleYEnd - visibleYStart;
+
+		visibleWidth = window.innerWidth;
+		visibleHeight = window.innerHeight;
+
+		visibleXEnd = visibleWidth + visibleXStart;
+		visibleYEnd = visibleHeight + visibleYStart;
 		
 		// set the ball to start within the visible frame
 		ballX += visibleXStart;
@@ -178,20 +190,20 @@ var browserBreakout = function() {
  	 */
 	collectImages = function() {
 		
-		debug("collectImages()");
+		debug('collectImages()');
 	
 		// find all images on the page
 		var allImages = document.getElementsByTagName('img');
 		
-		debug("collectImages: visible frame -  X:" + visibleXStart + "-" + visibleXEnd + "; Y: " + visibleYStart + "-" + visibleYEnd + ";");
+		debug('collectImages: visible frame -  X:' + visibleXStart + '-' + visibleXEnd + '; Y: ' + visibleYStart + '-' + visibleYEnd + ';');
 
 		// loop through all images
 		for (var counter = allImages.length - 1; counter >= 0; counter--){
 						
 			// get image details
 			var imagePosition = findPos(allImages[counter]);
-			var imageXStart = imagePosition[0];
-			var imageYStart = imagePosition[1];
+			var imageXStart = imagePosition[0] - visibleXStart;
+			var imageYStart = imagePosition[1] - visibleYStart;
 			var imageWidth = allImages[counter].style.width || allImages[counter].width;
 			var imageHeight = allImages[counter].style.height || allImages[counter].height;
 
@@ -200,11 +212,12 @@ var browserBreakout = function() {
 
 				// condition : if image is within visible (& safe) viewable area, use it
 				if (
-					imageXStart  > visibleXStart + (paddleHeight*2) &&
-					imageYStart  > visibleYStart + (paddleHeight*2) &&
-					(imageXStart + imageWidth) < visibleXEnd - (paddleHeight*2) &&
-					(imageYStart + imageHeight) < visibleYEnd - (paddleHeight*2)
+					imageXStart  > (paddleHeight*2) &&
+					imageYStart  > (paddleHeight*2) &&
+					(visibleXStart + imageXStart + imageWidth) < visibleXEnd - (paddleHeight*2) &&
+					(visibleYStart + imageYStart + imageHeight) < visibleYEnd - (paddleHeight*2)
 				) {
+
 					images.push({
 						'imageXStart' : imageXStart,
 						'imageYStart' : imageYStart,
@@ -221,7 +234,7 @@ var browserBreakout = function() {
 		// store values for later use
 		imagesAcceptable = imagesRemaining = images.length;
 		
-		debug("collectImages: - found " + imagesAcceptable + " out of " + allImages.length);
+		debug('collectImages: - found ' + imagesAcceptable + ' out of ' + allImages.length);
 	},
 	
 	
@@ -291,13 +304,13 @@ var browserBreakout = function() {
 
 		if (!evt) { evt = window.event; }
 		
-		if (evt.pageX > visibleXStart && evt.pageX < visibleXEnd) {
+		if (evt.pageX > 0 && evt.pageX < visibleXStart + visibleWidth) {
 			paddleX = Math.max(evt.pageX - visibleXStart - (paddleWidth/2), 0);
 			paddleX = Math.min(canvas.width - paddleWidth, paddleX);
 	  	}
 	
-		if (evt.pageY > visibleYStart && evt.pageY < visibleYEnd) {
-			paddleY = Math.max(evt.pageY - visibleYStart - (paddleWidth), 0);
+		if (evt.pageY > 0 && evt.pageY < visibleYStart + visibleHeight) {
+			paddleY = Math.max(evt.pageY - visibleYStart - (paddleWidth/2), 0);
 			paddleY = Math.min(canvas.height - paddleWidth, paddleY);
 	  	}
 	},
@@ -328,7 +341,7 @@ var browserBreakout = function() {
 	 */
 	drawBg = function() {
 		drawContext.clearRect(0, 0, canvas.width, canvas.height);
-		drawContext.fillStyle = "rgba(0, 0, 0, "+canvasTransparency+")";
+		drawContext.fillStyle = 'rgba(0, 0, 0, '+canvasTransparency+')';
 		drawContext.fillRect(0, 0, canvas.width, canvas.height);
 	},
 	
@@ -339,7 +352,7 @@ var browserBreakout = function() {
 	drawTitle = function() {
 		if (!textBlocks.titleBlock) {
 			textBlocks.titleBlock = new CanvasLetters({
-				textString:"Browser",
+				textString:'Browser',
 				name: 'titleBlock',
 				x: 25,
 				y: 25,
@@ -350,7 +363,7 @@ var browserBreakout = function() {
 		}
 		if (!textBlocks.subTitleBlock) {
 			textBlocks.subTitleBlock = new CanvasLetters({
-				textString:"Breakout",
+				textString:'Breakout',
 				name: 'subTitleBlock',
 				x: 25,
 				y: 125,
@@ -368,7 +381,7 @@ var browserBreakout = function() {
 	drawPlayNow = function() {
 		if (!textBlocks.playNow) {
 			textBlocks.playNow = new CanvasLetters({
-				textString:"Click to play",
+				textString:'Click to play',
 				name:'playNow',
 				x: 25,
 				y: 250,
@@ -384,7 +397,7 @@ var browserBreakout = function() {
 	drawTopScores = function() {
 		if (!textBlocks.lastScore) {
 			textBlocks.lastScore = new CanvasLetters({
-				textString:"Last score - " + lastScore,
+				textString:'Last score - ' + lastScore,
 				name:'lastScore',
 				x: 25,
 				y: -25,
@@ -395,7 +408,7 @@ var browserBreakout = function() {
 		
 		if (!textBlocks.topScore) {
 			textBlocks.topScore = new CanvasLetters({
-				textString:"Top score - " + topScore,
+				textString:'Top score - ' + topScore,
 				name:'topScore',
 				x: -25,
 				y: -25,
@@ -412,7 +425,7 @@ var browserBreakout = function() {
 	drawScore = function() {
 		if (!textBlocks.score) {
 			textBlocks.score = new CanvasLetters({
-				textString:"Score - " + (imagesAcceptable - imagesRemaining),
+				textString:'Score - ' + (imagesAcceptable - imagesRemaining),
 				name:'score',
 				x: 25,
 				y: -25,
@@ -423,7 +436,7 @@ var browserBreakout = function() {
 		
 		if (!textBlocks.remaining) {
 			textBlocks.remaining = new CanvasLetters({
-				textString:"Blocks Remaining - " + imagesRemaining,
+				textString:'Blocks Remaining - ' + imagesRemaining,
 				name:'remaining',
 				x: -25,
 				y: -25,
@@ -474,7 +487,7 @@ var browserBreakout = function() {
 	drawNoImagesMessage = function() {
 		if (!textBlocks.noImages) {
 			textBlocks.noImages = new CanvasLetters({
-				textString:"No suitable images found",
+				textString:'No suitable images found',
 				name:'noImages',
 				x: 25,
 				y: 400,
@@ -508,8 +521,8 @@ var browserBreakout = function() {
 		removeAllText();
 		updateHighScore();
 		gameState = state;
-		ballX = ballXStart + visibleXStart;
-		ballY = ballYStart + visibleYStart;
+		ballX = ballXStart;
+		ballY = ballYStart;
 		ballDx = ballDxStart;
 		ballDy = ballDyStart;
 		
@@ -523,8 +536,8 @@ var browserBreakout = function() {
 		if (state != 'running') {
 			textBlocks.titleBlock.setActiveVal(1);
 			textBlocks.subTitleBlock.setActiveVal(1);
-			textBlocks.lastScore.updateString("Last score - " + lastScore);
-			textBlocks.topScore.updateString("Top score - " + topScore);
+			textBlocks.lastScore.updateString('Last score - ' + lastScore);
+			textBlocks.topScore.updateString('Top score - ' + topScore);
 			
 			// condition : show optional extra message
 			if (state == 'noImages') {
@@ -542,8 +555,8 @@ var browserBreakout = function() {
 			}
 		} else {
 			if (!!textBlocks.score && !!textBlocks.remaining) {
-				textBlocks.score.updateString("Score - " + (imagesAcceptable - imagesRemaining));
-				textBlocks.remaining.updateString("Blocks Remaining - " + imagesRemaining);
+				textBlocks.score.updateString('Score - ' + (imagesAcceptable - imagesRemaining));
+				textBlocks.remaining.updateString('Blocks Remaining - ' + imagesRemaining);
 			}
 		}
 		
@@ -570,8 +583,8 @@ var browserBreakout = function() {
 	 */
 	updateScore = function() {
 		imagesRemaining--;
-		textBlocks.score.updateString("Score - " + (imagesAcceptable - imagesRemaining));
-		textBlocks.remaining.updateString("Blocks Remaining - " + imagesRemaining);
+		textBlocks.score.updateString('Score - ' + (imagesAcceptable - imagesRemaining));
+		textBlocks.remaining.updateString('Blocks Remaining - ' + imagesRemaining);
 	},
 	
 	
@@ -603,10 +616,10 @@ var browserBreakout = function() {
 				
 				// detect hit placement
 				var hit = [
-					{ dir: "top", val: ballY - image.imageYStart },
-					{ dir: "bottom", val: (image.imageYStart+image.imageHeight) - ballY },
-					{ dir: "left", val: ballX - image.imageXStart },
-					{ dir: "right", val: (image.imageXStart+image.imageWidth) - ballX }
+					{ dir: 'top', val: ballY - image.imageYStart },
+					{ dir: 'bottom', val: (image.imageYStart+image.imageHeight) - ballY },
+					{ dir: 'left', val: ballX - image.imageXStart },
+					{ dir: 'right', val: (image.imageXStart+image.imageWidth) - ballX }
 				];
 				
 				// sort to find where it hit
@@ -683,71 +696,55 @@ var browserBreakout = function() {
 		if (paddleY > visibleHeight-paddleWidth) { paddleY=visibleHeight-paddleWidth; }	// bottom
 				
 
-		drawContext.fillStyle = "rgba(0, 0, 0, "+canvasTransparency+")";
+		drawContext.fillStyle = 'rgba(0, 0, 0, '+canvasTransparency+')';
 
-		// hide top paddle
-		drawContext.clearRect(visibleXStart, visibleYStart, visibleWidth, paddleHeight);
-		drawContext.fillRect(visibleXStart, visibleYStart, visibleWidth, paddleHeight);
-		
-		// hide bottom paddle
-		drawContext.clearRect(visibleXStart, visibleYEnd-paddleHeight, visibleWidth, paddleHeight);
-		drawContext.fillRect(visibleXStart, visibleYEnd-paddleHeight, visibleWidth, paddleHeight);
-			
-		// hide left paddle
-		drawContext.clearRect(visibleXStart, visibleYStart, paddleHeight, visibleHeight);
-		drawContext.fillRect(visibleXStart, visibleYStart, paddleHeight, visibleHeight);
-		
-		// hide right paddle
-		drawContext.clearRect(visibleXEnd-paddleHeight, visibleYStart, paddleHeight, visibleHeight);
-		drawContext.fillRect(visibleXEnd-paddleHeight, visibleYStart, paddleHeight, visibleHeight);
-		
-		
+
 		// calculate bottom paddle hit detection
-		if (ballY + ballDy + ballRadius > visibleYEnd - paddleHeight) {
-			if (ballX > visibleXStart + paddleX && ballX < visibleXStart + paddleX + paddleWidth) {
-				ballDx = 5 * ((ballX - (paddleX + visibleXStart + paddleWidth / 2)) / paddleWidth);
+		if (ballY + ballDy + ballRadius > visibleHeight - paddleHeight) {
+			if (ballX > paddleX && ballX < paddleX + paddleWidth) {
+				ballDx = 5 * ((ballX - (paddleX + paddleWidth / 2)) / paddleWidth);
 				ballDy = -ballDy;
-				debug("Bottom Paddle Hit - Dx: " + ballDx + "; Dy: " + ballDy);
+				debug('Bottom Paddle Hit - Dx: ' + ballDx + '; Dy: ' + ballDy);
 			}
 		}
 		
 		
 		// calculate top paddle hit detection
-		if (ballY + ballDy - ballRadius < visibleYStart + paddleHeight) {
-			if (ballX > visibleXStart + paddleX && ballX < visibleXStart + paddleX + paddleWidth) {
-				ballDx = 5 * ((ballX - (paddleX + visibleXStart + paddleWidth / 2)) / paddleWidth);
+		if (ballY + ballDy - ballRadius < paddleHeight) {
+			if (ballX > paddleX && ballX < paddleX + paddleWidth) {
+				ballDx = 5 * ((ballX - (paddleX + paddleWidth / 2)) / paddleWidth);
 				ballDy = -ballDy;
-				debug("Top Paddle Hit - Dx: " + ballDx + "; Dy: " + ballDy);				
+				debug('Top Paddle Hit - Dx: ' + ballDx + '; Dy: ' + ballDy);				
 			}
 		}
 		
 		
 		// calculate right paddle hit detection
-		if (ballX + ballDx + ballRadius > visibleXEnd - paddleHeight) {
-			if (ballY > visibleYStart + paddleY && ballY < visibleYStart + paddleY + paddleWidth) {
-				ballDy = 5 * ((ballY - (paddleY + visibleYStart + paddleWidth / 2)) / paddleWidth);
+		if (ballX + ballDx + ballRadius > visibleWidth - paddleHeight) {
+			if (ballY > paddleY && ballY < paddleY + paddleWidth) {
+				ballDy = 5 * ((ballY - (paddleY + paddleWidth / 2)) / paddleWidth);
 				ballDx = -ballDx;
-				debug("Right Paddle Hit: " + ballDx + "; Dy: " + ballDy);
+				debug('Right Paddle Hit: ' + ballDx + '; Dy: ' + ballDy);
 			}
 		}
 		
 		
 		// calculate left paddle hit detection
-		if (ballX + ballDx - ballRadius < visibleXStart + paddleHeight) {
-			if (ballY > visibleYStart + paddleY && ballY < visibleYStart + paddleY + paddleWidth) {
-				ballDy = 5 * ((ballY - (paddleY + visibleYStart + paddleWidth / 2)) / paddleWidth);
+		if (ballX + ballDx - ballRadius < paddleHeight) {
+			if (ballY > paddleY && ballY < paddleY + paddleWidth) {
+				ballDy = 5 * ((ballY - (paddleY + paddleWidth / 2)) / paddleWidth);
 				ballDx = -ballDx;
-				debug("Left Paddle Hit: " + ballDx + "; Dy: " + ballDy);				
+				debug('Left Paddle Hit: ' + ballDx + '; Dy: ' + ballDy);				
 			}
 		}
 		
 		
 		// draw paddles
 		drawContext.fillStyle = paddleColour;
-		drawRectangle(visibleXStart + paddleX, visibleYStart, paddleWidth, paddleHeight); 				// top
-		drawRectangle(visibleXStart + paddleX, visibleYEnd - paddleHeight, paddleWidth, paddleHeight); 	// bottom
-		drawRectangle(visibleXStart, visibleYStart + paddleY, paddleHeight, paddleWidth); 				// left
-		drawRectangle(visibleXEnd - paddleHeight, visibleYStart + paddleY, paddleHeight, paddleWidth); 	// right
+		drawRectangle(paddleX, 0, paddleWidth, paddleHeight); 				// top
+		drawRectangle(paddleX, visibleHeight - paddleHeight, paddleWidth, paddleHeight); 	// bottom
+		drawRectangle(0, paddleY, paddleHeight, paddleWidth); 				// left
+		drawRectangle(visibleWidth - paddleHeight, paddleY, paddleHeight, paddleWidth); 	// right
 	},
 	
 	
@@ -853,10 +850,10 @@ var browserBreakout = function() {
 				}
 				
 				if (
-					ballX + ballDx + ballRadius > visibleXEnd ||	// right
-					ballX + ballDx - ballRadius < visibleXStart ||	// left
-					ballY + ballDy + ballRadius > visibleYEnd ||	// bottom
-					ballY + ballDy - ballRadius < visibleYStart 	// top
+					ballX + ballDx + ballRadius > visibleWidth ||	// right
+					ballX + ballDx - ballRadius < 0 ||	// left
+					ballY + ballDy + ballRadius > visibleHeight ||	// bottom
+					ballY + ballDy - ballRadius < 0 	// top
 				) {
 					updateGameState('gameEnded');
 				}
@@ -883,7 +880,7 @@ var browserBreakout = function() {
 	},
 	debugSpacer = function() {
 		if (!!debugMode) {
-			console.log("----------------------------------------------------------------------------------");
+			console.log('----------------------------------------------------------------------------------');
 		}
 	},
 	
@@ -893,7 +890,7 @@ var browserBreakout = function() {
 	 */
 	init = function(){
 		
-		debug("init()");
+		debug('init()');
 
 
 		// fix browser CSS to disable scrolling			
@@ -956,8 +953,7 @@ var browserBreakout = function() {
 			images = [];
 			imagesAcceptable = 0;
 			calculatePositions();
-			canvas.width = document.body.offsetWidth;
-			canvas.height = document.body.offsetHeight;
+			setCanvasPosition();
 			init();
 		}
 		reseting = false;
@@ -1005,55 +1001,55 @@ var browserBreakout = function() {
 		/*
 		 * the (potentially modified) text string we're drawing
 		 */
-		textString = "",
+		textString = '',
 
 		/*
 		 * Characters
 		 */
 		characters = {
-			"a": [0,0,1,0,0,0,1,0,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,1],
-			"b": [1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,0],
-			"c": [0,1,1,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0,1,1,1,0],
-			"d": [1,1,1,0,0,1,0,0,1,0,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,1,0,1,1,1,0,0],
-			"e": [1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,1,1],
-			"f": [1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0],
-			"g": [0,1,1,1,0,1,0,0,0,1,1,0,0,0,0,1,0,1,1,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,1],
-			"h": [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1],
-			"i": [1,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,1,1,1,1],
-			"j": [1,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,1,1,0,0],
-			"k": [1,0,0,0,1,1,0,0,1,0,1,0,1,0,0,1,1,0,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0,0,1],
-			"l": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,1,1],
-			"m": [1,0,0,0,1,1,1,0,1,1,1,0,1,0,1,1,0,1,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1],
-			"n": [1,0,0,0,1,1,0,0,0,1,1,1,0,0,1,1,0,1,0,1,1,0,0,1,1,1,0,0,0,1,1,0,0,0,1],
-			"o": [0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
-			"p": [1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0],
-			"q": [0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,1,0,1,1,0,0,1,0,0,1,1,0,1],
-			"r": [1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,0,1,0,1,0,0,1,0,0,1,0,1,0,0,0,1],
-			"s": [0,1,1,1,0,1,0,0,0,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
-			"t": [1,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0],
-			"u": [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
-			"v": [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,0,1,0,1,0,0,1,0,1,0,0,0,1,0,0,0,0,1,0,0],
-			"w": [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0],
-			"x": [1,0,0,0,1,1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,0,1,1,0,0,0,1],
-			"y": [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0],
-			"z": [1,1,1,1,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,1,1,1,1],
-			"0": [0,1,1,1,0,1,0,0,0,1,1,0,0,1,1,1,0,1,0,1,1,1,0,0,1,1,0,0,0,1,0,1,1,1,0],
-			"1": [0,0,1,0,0,0,1,1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,1,1,1,1],
-			"2": [0,1,1,1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,1,1,1,1],
-			"3": [0,1,1,1,0,1,0,0,0,1,0,0,0,0,1,0,0,1,1,0,0,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
-			"4": [0,0,0,1,0,0,0,1,1,0,0,1,0,1,0,1,0,0,1,0,1,1,1,1,1,0,0,0,1,0,0,0,0,1,0],
-			"5": [1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
-			"6": [0,0,1,1,0,0,1,0,0,0,1,0,0,0,0,1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
-			"7": [1,1,1,1,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0],
-			"8": [0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
-			"9": [0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,0,1,1,1,1,0,0,0,0,1,0,0,0,1,0,0,1,1,0,0],
-			"-": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-			"?": [0,1,1,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0],
-			"!": [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0],
-			"@": [0,1,1,1,0,1,0,0,0,1,1,0,1,1,1,1,0,1,0,1,1,0,1,1,0,1,0,0,0,1,0,1,1,1,0],
-			"&": [0,1,1,0,0,1,0,0,1,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,1,0,0,1,0,0,1,1,0,1],
-			".": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,0], 
-			" ": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] 
+			'a': [0,0,1,0,0,0,1,0,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,1],
+			'b': [1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,0],
+			'c': [0,1,1,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0,1,1,1,0],
+			'd': [1,1,1,0,0,1,0,0,1,0,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,1,0,1,1,1,0,0],
+			'e': [1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,1,1],
+			'f': [1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0],
+			'g': [0,1,1,1,0,1,0,0,0,1,1,0,0,0,0,1,0,1,1,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,1],
+			'h': [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1],
+			'i': [1,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,1,1,1,1],
+			'j': [1,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,1,1,0,0],
+			'k': [1,0,0,0,1,1,0,0,1,0,1,0,1,0,0,1,1,0,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0,0,1],
+			'l': [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,1,1],
+			'm': [1,0,0,0,1,1,1,0,1,1,1,0,1,0,1,1,0,1,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1],
+			'n': [1,0,0,0,1,1,0,0,0,1,1,1,0,0,1,1,0,1,0,1,1,0,0,1,1,1,0,0,0,1,1,0,0,0,1],
+			'o': [0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
+			'p': [1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0],
+			'q': [0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,1,0,1,1,0,0,1,0,0,1,1,0,1],
+			'r': [1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,1,1,1,1,0,1,0,1,0,0,1,0,0,1,0,1,0,0,0,1],
+			's': [0,1,1,1,0,1,0,0,0,1,1,0,0,0,0,0,1,1,1,0,0,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
+			't': [1,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0],
+			'u': [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
+			'v': [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,0,1,0,1,0,0,1,0,1,0,0,0,1,0,0,0,0,1,0,0],
+			'w': [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,0,1,0,1,0],
+			'x': [1,0,0,0,1,1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,0,1,1,0,0,0,1],
+			'y': [1,0,0,0,1,1,0,0,0,1,1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0],
+			'z': [1,1,1,1,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,1,1,1,1],
+			'0': [0,1,1,1,0,1,0,0,0,1,1,0,0,1,1,1,0,1,0,1,1,1,0,0,1,1,0,0,0,1,0,1,1,1,0],
+			'1': [0,0,1,0,0,0,1,1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,1,1,1,1],
+			'2': [0,1,1,1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,1,1,1,1],
+			'3': [0,1,1,1,0,1,0,0,0,1,0,0,0,0,1,0,0,1,1,0,0,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
+			'4': [0,0,0,1,0,0,0,1,1,0,0,1,0,1,0,1,0,0,1,0,1,1,1,1,1,0,0,0,1,0,0,0,0,1,0],
+			'5': [1,1,1,1,1,1,0,0,0,0,1,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
+			'6': [0,0,1,1,0,0,1,0,0,0,1,0,0,0,0,1,1,1,1,0,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
+			'7': [1,1,1,1,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0],
+			'8': [0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,0,1,1,1,0],
+			'9': [0,1,1,1,0,1,0,0,0,1,1,0,0,0,1,0,1,1,1,1,0,0,0,0,1,0,0,0,1,0,0,1,1,0,0],
+			'-': [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+			'?': [0,1,1,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0],
+			'!': [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0],
+			'@': [0,1,1,1,0,1,0,0,0,1,1,0,1,1,1,1,0,1,0,1,1,0,1,1,0,1,0,0,0,1,0,1,1,1,0],
+			'&': [0,1,1,0,0,1,0,0,1,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,1,0,0,1,0,0,1,1,0,1],
+			'.': [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,0], 
+			' ': [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] 
 		},
 
 
@@ -1063,9 +1059,9 @@ var browserBreakout = function() {
 		 * (the ones to copy from if an option isn't specified specifically)
 		 */
 		defaults = {
-			blockColour : "ff9900",
+			blockColour : 'ff9900',
 			blockSize : 10,
-			textString : "...",
+			textString : '...',
 			clearance : 10,
 			ordering : 'default',
 			animate : false,
@@ -1138,15 +1134,15 @@ var browserBreakout = function() {
 			blockCount = 0;
 			
 			if (options.x < 0) {
-				currentX = visibleXEnd - (options.blockSize*characterBlockHeight*(options.textString.length-1)) + options.x;
+				currentX = visibleWidth - (options.blockSize*characterBlockHeight*(options.textString.length-1)) + options.x;
 			} else {
-				currentX = options.x + visibleXStart;
+				currentX = options.x + 0;
 			}
 			
 			if (options.y < 0) {
-				currentY = visibleYEnd - options.clearance - (options.blockSize*characterBlockHeight) + options.y;
+				currentY = visibleHeight - options.clearance - (options.blockSize*characterBlockHeight) + options.y;
 			} else {
-				currentY = options.y + visibleYStart;
+				currentY = options.y + 0;
 			}
 
 			fixTextLength();
@@ -1177,7 +1173,7 @@ var browserBreakout = function() {
 			var lineLength = Math.floor( ( canvas.width - options.clearance ) / ( ( characterBlockWidth * options.blockSize ) + options.clearance ) );
 
 			// test each word invidivually
-			textStringArray = textString.split(" ");
+			textStringArray = textString.split(' ');
 			for (var counter = textStringArray.length - 1; counter >= 0; counter--){
 
 				// if any words are longer than the line-length, hyphenate
@@ -1193,7 +1189,7 @@ var browserBreakout = function() {
 					}
 					wordArray.push(word);
 
-					textString = textString.replace(originalWord, wordArray.join("- "));
+					textString = textString.replace(originalWord, wordArray.join('- '));
 				}
 			};
 		},
@@ -1217,7 +1213,7 @@ var browserBreakout = function() {
 					}
 
 					// find the position of the next space (to calculate the word length)
-					var nextSpacePosition = textString.indexOf(" ", character);
+					var nextSpacePosition = textString.indexOf(' ', character);
 					if (nextSpacePosition == -1) { nextSpacePosition = textStringLength; }
 
 					// start working out where to place the new letter/word
@@ -1231,7 +1227,7 @@ var browserBreakout = function() {
 
 
 					// condition : start a new line?
-					if (newLineRequired && textString[character] != " ") {
+					if (newLineRequired && textString[character] != ' ') {
 						currentX = options.clearance;
 						currentY = (lineCount*(characterBlockHeight*options.blockSize)) + (options.clearance*++lineCount);
 					}
@@ -1261,21 +1257,21 @@ var browserBreakout = function() {
 
 			// condition : change order of appearing blocks
 			switch (options.ordering) {
-				case "vertical":
+				case 'vertical':
 					function vertical(a, b) { return a.y - b.y; }
 					blocks.sort(vertical);
 				break;
 
-				case "horizontal":
+				case 'horizontal':
 					function horizontal(a, b) { return a.x - b.x; }
 					blocks.sort(horizontal);
 				break;
 
-				case "reverse":
+				case 'reverse':
 					blocks.reverse();
 				break;
 
-				case "random":
+				case 'random':
 					function randOrd(){ return (Math.round(Math.random())-0.5); }
 					blocks.sort(randOrd);
 				break;
@@ -1301,7 +1297,7 @@ var browserBreakout = function() {
 			for (var counter = animateLimit; counter < currentBlock; counter++) {
 				if (!!blocks[counter]) {
 					if (blocks[counter].opacity < 1) { blocks[counter].opacity += 0.1; }
-					drawContext.fillStyle = "rgba("+HexToRGB(drawColour)+", "+blocks[counter].opacity+")";
+					drawContext.fillStyle = 'rgba('+HexToRGB(drawColour)+', '+blocks[counter].opacity+')';
 					drawRectangle(blocks[counter].x, blocks[counter].y, options.blockSize, options.blockSize);
 				}
 			};
@@ -1321,11 +1317,11 @@ var browserBreakout = function() {
 		/*
 		 * Turn Hex into RGB, for block colour
 		 */
-		HexToRGB = function(h) {return HexToR(h) +","+HexToG(h)+","+HexToB(h);},
+		HexToRGB = function(h) {return HexToR(h) +','+HexToG(h)+','+HexToB(h);},
 		HexToR = function(h) {return parseInt((cutHex(h)).substring(0,2),16);},
 		HexToG = function(h) {return parseInt((cutHex(h)).substring(2,4),16);},
 		HexToB = function(h) {return parseInt((cutHex(h)).substring(4,6),16);},
-		cutHex = function(h) {return (h.charAt(0)=="#") ? h.substring(1,7):h;},
+		cutHex = function(h) {return (h.charAt(0)=='#') ? h.substring(1,7):h;},
 		
 		
 		
