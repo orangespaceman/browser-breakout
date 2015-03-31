@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang='en-gb' xmlns='http://www.w3.org/1999/xhtml'>
+<head>
+	<meta charset='utf-8'>
+	<title>Browser Breakout</title>
+	<style>
+		html, body, #wrapper {
+			height: 100%;
+			overflow: hidden;
+		}
+
+		* { margin:0;padding:0; }
+
+		#wrapper {
+			position:relative;
+		}
+
+		h1 {
+			margin: 1em;
+		}
+
+		img {
+			position:absolute;
+		}
+
+		span#bb-go {
+			position:fixed;
+			z-index:10000;
+			display:block;
+			top:10px;
+			right:10px;
+			padding:10px 20px;
+			background:#f90;
+			opacity:0.7;
+			box-shadow: 5px 5px 5px rgba(0,0,0,0.5);
+			cursor: pointer;
+		}
+		span#bb-go:hover {
+			opacity:0.9;
+		}
+	</style>
+</head>
+<body>
+	<div id="wrapper">
+		<h1>Browser Breakout!</h1>
+		<p><span id="bb-go">Play Browser Breakout!</span></p>
+	</div>
+	<script src="http://thegingerbloke.github.io/lab-badge/lab-badge.min.js"></script>
+	<script>
+		var inited = false;
+		var go = document.getElementById("bb-go");
+		go.onclick = function() {
+			var head = document.getElementsByTagName("head")[0];
+			script = document.createElement('script');
+			script.id = 'browser-breakout';
+			script.src = "browser-breakout.js";
+			script.type = "text/javascript";
+			head.appendChild(script);
+			go.style.display = "none";
+		}
+
+		var wrapper = document.getElementById('wrapper');
+		for (var counter=0; counter < 10; counter++) {
+
+			var images = ['red', 'yellow', 'green', 'blue', 'orange'];
+
+			var img = document.createElement('img');
+			img.src = 'images/' + images[rand(0, images.length-1)] + '.png';
+
+			wrapper.appendChild(img);
+
+			var border = 100;
+
+			img.style.left = rand(border, getWidth() - border) + 'px';
+			img.style.top = rand(border, getHeight() - border) + 'px';
+			img.style.opacity = 0.5;
+		}
+
+		function rand (min, max) {
+			return Math.floor(Math.random() * max) + min;
+		}
+
+		function getHeight () {
+			var body = document.body,
+    			html = document.documentElement;
+			return Math.max( body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight );
+		}
+
+		function getWidth () {
+			var body = document.body,
+    			html = document.documentElement;
+			return Math.max( body.scrollWidth, body.offsetWidth, html.clientWidth, html.scrollWidth, html.offsetWidth );
+		}
+
+	</script>
+</body>
+</html>

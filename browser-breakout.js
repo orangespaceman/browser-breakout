@@ -11,7 +11,7 @@ var browserBreakout = function() {
 	 * The HTML body element
 	 */
 	var body = null,
-	
+
 	/*
 	 * The canvas HTMl element
 	 */
@@ -21,19 +21,19 @@ var browserBreakout = function() {
 	 * The canvas draw context
 	 */
 	drawContext = null,
-	
+
 	/*
 	 * The draw interval
 	 */
 	drawInterval = null,
-	
+
 	/*
 	 * Reseting on browser resize
 	 */
 	reseting = false,
-	
+
 	/*
-	 * Current Game State.  Can be: 
+	 * Current Game State.  Can be:
 	 * 'title' => Game initialised for the first time
 	 * 'running' => Game is running!
 	 * 'gameEnded' => Game has ended unsuccessfully
@@ -41,20 +41,20 @@ var browserBreakout = function() {
 	 * 'noImages' => No appropriate images were found
 	 */
 	gameState = 'title',
-	
+
 	/*
 	 * text blocks
 	 */
 	textBlocks = {},
 	textAnimationTypes = ['default', 'vertical', 'horizontal', 'random', 'reverse'],
-	
+
 	/*
 	 * Acceptable images to play with
 	 */
 	images = [],
 	imagesAcceptable = 0,
 	imagesRemaining = 0,
-	
+
 	/*
 	 * Visible position (within page)
 	 */
@@ -64,7 +64,7 @@ var browserBreakout = function() {
 	visibleYEnd = 0,
 	visibleWidth = 0,
 	visibleHeight = 0,
-	
+
 	/*
 	 * Ball positions
 	 */
@@ -75,7 +75,7 @@ var browserBreakout = function() {
 	ballDxStart = ballDx = 2,
 	ballDyStart = ballDy = 2,
 	ballVelocity = 3,
-	
+
 	/*
 	 * Paddle positions
 	 */
@@ -84,19 +84,19 @@ var browserBreakout = function() {
 	paddleY = 0,
 	paddleHeight = 10,
 	paddleWidth = 100,
-	
+
 	/*
 	 * scores
 	 */
 	lastScore = 0,
 	topScore = 0,
-	
+
 	/*
 	 * Current canvas transparency
 	 */
 	canvasTransparency = 0,
 	targetTransparency = 0.7,
-	
+
 	/*
 	 * keys
 	 */
@@ -104,12 +104,12 @@ var browserBreakout = function() {
 	upDown = false,
 	leftDown = false,
 	rightDown = false,
-	
+
 	/*
 	 * Display debug messages?
 	 */
-	debugMode = false,	
-	
+	debugMode = true,
+
 	/*
 	 * Debug timeout
 	 */
@@ -120,39 +120,39 @@ var browserBreakout = function() {
 	 * Fix browser CSS to disable scrolling
 	 */
 	hideOverflow = function() {
-		
+
 		debug('hideOverflow()');
-		
+
 		body = document.getElementsByTagName('body')[0];
 //		body.style.height = '100%';
 //		body.style.width = '100%';
 		body.style.overflow = 'hidden';
 	},
-	
-	
+
+
 	/*
 	 * Create canvas element
 	 */
 	createCanvas = function() {
-		
+
 		debug('createCanvas()');
-		
+
 		// create canvas
 		canvas = document.createElement('canvas');
 		canvas.id = 'canvas';
 		canvas.style.position = 'absolute';
 		canvas.style.zIndex = 10000000; // hopefully that's high enough...
-		
+
 		setCanvasPosition();
-		
+
 		// add the canvas into the page
 		body.appendChild(canvas);
-		
+
 		// get the draw context
 		drawContext = canvas.getContext('2d');
 	},
-	
-	
+
+
 	/*
 	 * position canvas within visible portion of the screen
 	 */
@@ -162,8 +162,8 @@ var browserBreakout = function() {
 		canvas.style.left = visibleXStart + 'px';
 		canvas.style.top = visibleYStart + 'px';
 	},
-	
-	
+
+
 	/*
 	 * Calculate visible area of page
 	 */
@@ -177,38 +177,39 @@ var browserBreakout = function() {
 
 		visibleXEnd = visibleWidth + visibleXStart;
 		visibleYEnd = visibleHeight + visibleYStart;
-		
+
 		// set the ball to start within the visible frame
 		ballX += visibleXStart;
 		ballY += visibleYStart;
 	},
-	
-	
-	
+
+
+
 	/*
-	 * Retrieve all images of a reasonable size 
+	 * Retrieve all images of a reasonable size
  	 */
 	collectImages = function() {
-		
+
 		debug('collectImages()');
-	
+
 		// find all images on the page
 		var allImages = document.getElementsByTagName('img');
-		
+
 		debug('collectImages: visible frame -  X:' + visibleXStart + '-' + visibleXEnd + '; Y: ' + visibleYStart + '-' + visibleYEnd + ';');
 
 		// loop through all images
 		for (var counter = allImages.length - 1; counter >= 0; counter--){
-						
+
 			// get image details
 			var imagePosition = findPos(allImages[counter]);
 			var imageXStart = imagePosition[0] - visibleXStart;
 			var imageYStart = imagePosition[1] - visibleYStart;
-			var imageWidth = allImages[counter].style.width || allImages[counter].width;
-			var imageHeight = allImages[counter].style.height || allImages[counter].height;
+			var imageWidth = allImages[counter].width || allImages[counter].style.width;
+			var imageHeight = allImages[counter].height || allImages[counter].style.height;
 
 			// condition : test all images are large enough to be worth using
 			if (imageWidth > 20 && imageHeight > 20) {
+
 
 				// condition : if image is within visible (& safe) viewable area, use it
 				if (
@@ -230,14 +231,14 @@ var browserBreakout = function() {
 				}
 			}
 		}
-		
+
 		// store values for later use
 		imagesAcceptable = imagesRemaining = images.length;
-		
+
 		debug('collectImages: - found ' + imagesAcceptable + ' out of ' + allImages.length);
 	},
-	
-	
+
+
 	/*
 	 * findpos - find an element's exact co-ordinates on a page
 	 * from : http://www.quirksmode.org/js/findpos.html
@@ -253,46 +254,46 @@ var browserBreakout = function() {
 		}
 		return [curleft,curtop];
 	},
-	
-	
+
+
 	/*
 	 * keyboard navigation detection
 	 */
 	onKeyDown = function(evt) {
-		
+
 		if (!evt) { evt = window.event; }
-		
-		if (evt.keyCode == 40) { 
-			downDown = true; 
+
+		if (evt.keyCode == 40) {
+			downDown = true;
 		} else if (evt.keyCode == 38) {
 			upDown = true;
-		}  
+		}
 
-		if (evt.keyCode == 39) { 
-			rightDown = true; 
+		if (evt.keyCode == 39) {
+			rightDown = true;
 		} else if (evt.keyCode == 37) {
 			leftDown = true;
 		}
 	},
-	
-	
+
+
 	/*
 	 * keyboard navigation detection
 	 */
 	onKeyUp = function(evt) {
 
 		if (!evt) { evt = window.event; }
-	
-		if (evt.keyCode == 40) { 
-			downDown = false; 
+
+		if (evt.keyCode == 40) {
+			downDown = false;
 		} else if (evt.keyCode == 38) {
 			upDown = false;
-		}  
-		
-		if (evt.keyCode == 39) { 
-			rightDown = false; 
-		} else if (evt.keyCode == 37) { 
-			leftDown = false; 
+		}
+
+		if (evt.keyCode == 39) {
+			rightDown = false;
+		} else if (evt.keyCode == 37) {
+			leftDown = false;
 		}
 	},
 
@@ -303,29 +304,29 @@ var browserBreakout = function() {
 	onMouseMove = function(evt) {
 
 		if (!evt) { evt = window.event; }
-		
+
 		if (evt.pageX > 0 && evt.pageX < visibleXStart + visibleWidth) {
 			paddleX = Math.max(evt.pageX - visibleXStart - (paddleWidth/2), 0);
 			paddleX = Math.min(canvas.width - paddleWidth, paddleX);
 	  	}
-	
+
 		if (evt.pageY > 0 && evt.pageY < visibleYStart + visibleHeight) {
 			paddleY = Math.max(evt.pageY - visibleYStart - (paddleWidth/2), 0);
 			paddleY = Math.min(canvas.height - paddleWidth, paddleY);
 	  	}
 	},
-	
-	
+
+
 	/*
 	 * mouse clicking
 	 */
 	onMouseClick = function(evt) {
-		
+
 		if (!evt) { evt = window.event; }
-		
+
 		// only used to start a game, so detect if we're waiting for this
 		if (gameState != 'running') {
-			
+
 			if (imagesAcceptable == 0) {
 				updateGameState('noImages');
 			} else {
@@ -334,8 +335,8 @@ var browserBreakout = function() {
 		}
 	},
 
-	
-	
+
+
 	/*
 	 * draw bg
 	 */
@@ -344,8 +345,8 @@ var browserBreakout = function() {
 		drawContext.fillStyle = 'rgba(0, 0, 0, '+canvasTransparency+')';
 		drawContext.fillRect(0, 0, canvas.width, canvas.height);
 	},
-	
-		
+
+
 	/*
 	 * create titles
 	 */
@@ -373,8 +374,8 @@ var browserBreakout = function() {
 			});
 		}
 	},
-	
-	
+
+
 	/*
 	 * create play now text
 	 */
@@ -389,8 +390,8 @@ var browserBreakout = function() {
 			});
 		}
 	},
-	
-	
+
+
 	/*
 	 * create top scores
 	 */
@@ -405,7 +406,7 @@ var browserBreakout = function() {
 				clearance: 2
 			});
 		}
-		
+
 		if (!textBlocks.topScore) {
 			textBlocks.topScore = new CanvasLetters({
 				textString:'Top score - ' + topScore,
@@ -417,8 +418,8 @@ var browserBreakout = function() {
 			});
 		}
 	},
-	
-	
+
+
 	/*
 	 * create creds
 	 */
@@ -434,8 +435,8 @@ var browserBreakout = function() {
 			});
 		}
 	},
-	
-	
+
+
 	/*
 	 * create in-game scores
 	 */
@@ -450,7 +451,7 @@ var browserBreakout = function() {
 				clearance: 2
 			});
 		}
-		
+
 		if (!textBlocks.remaining) {
 			textBlocks.remaining = new CanvasLetters({
 				textString:'Blocks Remaining - ' + imagesRemaining,
@@ -462,8 +463,8 @@ var browserBreakout = function() {
 			});
 		}
 	},
-	
-	
+
+
 	/*
 	 * create game end message
 	 */
@@ -479,8 +480,8 @@ var browserBreakout = function() {
 			});
 		}
 	},
-	
-	
+
+
 	/*
 	 * create game end message
 	 */
@@ -496,8 +497,8 @@ var browserBreakout = function() {
 			});
 		}
 	},
-	
-	
+
+
 	/*
 	 * create no images message
 	 */
@@ -513,8 +514,8 @@ var browserBreakout = function() {
 			});
 		}
 	},
-	
-	
+
+
 	/*
 	 * draw text blocks - called every time by the draw() loop
 	 */
@@ -525,14 +526,14 @@ var browserBreakout = function() {
 			}
 		};
 	},
-	
-	
+
+
 	/*
-	 * Change the game state - 
+	 * Change the game state -
 	 * resets blocks and game parameters
 	 */
 	updateGameState = function(state) {
-		
+
 		// reset game state
 		drawBg();
 		removeAllText();
@@ -542,13 +543,13 @@ var browserBreakout = function() {
 		ballY = ballYStart;
 		ballDx = ballDxStart;
 		ballDy = ballDyStart;
-		
+
 		// reset images
 		for (var i = images.length - 1; i >= 0; i--){
 			images[i].state = 1;
 			images[i].visible = 0;
 		}
-		
+
 		// reset text
 		if (state != 'running') {
 			textBlocks.titleBlock.setActiveVal(1);
@@ -556,7 +557,7 @@ var browserBreakout = function() {
 			textBlocks.creds.setActiveVal(1);
 			textBlocks.lastScore.updateString('Last score - ' + lastScore);
 			textBlocks.topScore.updateString('Top score - ' + topScore);
-			
+
 			// condition : show optional extra message
 			if (state == 'noImages') {
 				if (!!textBlocks.noImages) {
@@ -577,25 +578,25 @@ var browserBreakout = function() {
 				textBlocks.remaining.updateString('Blocks Remaining - ' + imagesRemaining);
 			}
 		}
-		
+
 		imagesRemaining = imagesAcceptable;
 		debug('changed gameState to ' + state);
 	},
-	
-	
+
+
 	/*
-	 * Remove all existing text 
+	 * Remove all existing text
 	 */
 	removeAllText = function() {
-		
+
 		// reset all blocks ready to be redrawn
 		for (textBlock in textBlocks){
 			textBlocks[textBlock].setActiveVal(0);
 		}
 	},
-	
-	
-	
+
+
+
 	/*
 	 * During the game, when a block has been hit, update the score
 	 */
@@ -604,8 +605,8 @@ var browserBreakout = function() {
 		textBlocks.score.updateString('Score - ' + (imagesAcceptable - imagesRemaining));
 		textBlocks.remaining.updateString('Blocks Remaining - ' + imagesRemaining);
 	},
-	
-	
+
+
 	/*
 	 * When the game is complete, check whether this is a high score
 	 */
@@ -615,23 +616,23 @@ var browserBreakout = function() {
 			topScore = lastScore;
 		}
 	},
-	
-	
+
+
 	/*
 	 * draw images
 	 */
 	drawImages = function() {
-	
+
 		for (var counter = images.length - 1; counter >= 0; counter--){
 			var image = images[counter];
-			
+
 			// condition : detect collision
 			if (
 				image.state == 1 &&
 				ballX > image.imageXStart && ballX < image.imageXStart + image.imageWidth &&
 				ballY > image.imageYStart && ballY < image.imageYStart + image.imageHeight
 			) {
-				
+
 				// detect hit placement
 				var hit = [
 					{ dir: 'top', val: ballY - image.imageYStart },
@@ -639,7 +640,7 @@ var browserBreakout = function() {
 					{ dir: 'left', val: ballX - image.imageXStart },
 					{ dir: 'right', val: (image.imageXStart+image.imageWidth) - ballX }
 				];
-				
+
 				// sort to find where it hit
 				function sortByLowest(a, b) {
 				    var x = a.val;
@@ -651,28 +652,28 @@ var browserBreakout = function() {
 				if (hit[0].dir == 'top' || hit[0].dir == 'bottom') {
 					ballDy = -ballDy;
 				} else {
-					ballDx = -ballDx;					
+					ballDx = -ballDx;
 				}
-				
-				
+
+
 				updateScore();
 				image.state = 0;
 			}
 
-			
+
 			// condition : if the still image exists, display it!
-			if (image.state == 1) {				
+			if (image.state == 1) {
 				drawContext.drawImage(image.image, image.imageXStart, image.imageYStart);
-			} 
+			}
 		};
 	},
-	
-	
+
+
 	/*
 	 * draw the ball
 	 */
 	drawBall = function() {
-		
+
 		// condition : adjust velocity for slow-moving ball
 		var v = ballVelocity;
 		if (Math.abs(ballDx) < 1 || Math.abs(ballDy) < 1) { v +=1; }
@@ -683,36 +684,36 @@ var browserBreakout = function() {
 		// set new ball position
 		ballX += v * ballDx;
 		ballY += v * ballDy;
-		
+
 		// draw new ball
 		drawContext.fillStyle = ballColour;
 		drawCircle(ballX, ballY, ballRadius);
 	},
-	
-	
+
+
 	/*
 	 * draw the four paddles around the edge
 	 */
 	drawPaddles = function() {
-		
+
 		// calculate whether to move paddles
 		if (rightDown) {
-			paddleX += 20;	
+			paddleX += 20;
 		} else if (leftDown) {
 			paddleX -= 20;
 		}
-		
+
 		if (downDown) {
-			paddleY += 20;	
+			paddleY += 20;
 		} else if (upDown) {
 			paddleY -= 20;
 		}
-		
+
 		if (paddleX < 0) { paddleX = 0; }	//left
 		if (paddleX > visibleWidth-paddleWidth) { paddleX=visibleWidth-paddleWidth; }	// right
 		if (paddleY < 0) { paddleY = 0; }	// top
 		if (paddleY > visibleHeight-paddleWidth) { paddleY=visibleHeight-paddleWidth; }	// bottom
-				
+
 
 		drawContext.fillStyle = 'rgba(0, 0, 0, '+canvasTransparency+')';
 
@@ -725,18 +726,18 @@ var browserBreakout = function() {
 				debug('Bottom Paddle Hit - Dx: ' + ballDx + '; Dy: ' + ballDy);
 			}
 		}
-		
-		
+
+
 		// calculate top paddle hit detection
 		if (ballY + ballDy - ballRadius < paddleHeight) {
 			if (ballX > paddleX && ballX < paddleX + paddleWidth) {
 				ballDx = 5 * ((ballX - (paddleX + paddleWidth / 2)) / paddleWidth);
 				ballDy = -ballDy;
-				debug('Top Paddle Hit - Dx: ' + ballDx + '; Dy: ' + ballDy);				
+				debug('Top Paddle Hit - Dx: ' + ballDx + '; Dy: ' + ballDy);
 			}
 		}
-		
-		
+
+
 		// calculate right paddle hit detection
 		if (ballX + ballDx + ballRadius > visibleWidth - paddleHeight) {
 			if (ballY > paddleY && ballY < paddleY + paddleWidth) {
@@ -745,18 +746,18 @@ var browserBreakout = function() {
 				debug('Right Paddle Hit: ' + ballDx + '; Dy: ' + ballDy);
 			}
 		}
-		
-		
+
+
 		// calculate left paddle hit detection
 		if (ballX + ballDx - ballRadius < paddleHeight) {
 			if (ballY > paddleY && ballY < paddleY + paddleWidth) {
 				ballDy = 5 * ((ballY - (paddleY + paddleWidth / 2)) / paddleWidth);
 				ballDx = -ballDx;
-				debug('Left Paddle Hit: ' + ballDx + '; Dy: ' + ballDy);				
+				debug('Left Paddle Hit: ' + ballDx + '; Dy: ' + ballDy);
 			}
 		}
-		
-		
+
+
 		// draw paddles
 		drawContext.fillStyle = paddleColour;
 		drawRectangle(paddleX, 0, paddleWidth, paddleHeight); 				// top
@@ -764,8 +765,8 @@ var browserBreakout = function() {
 		drawRectangle(0, paddleY, paddleHeight, paddleWidth); 				// left
 		drawRectangle(visibleWidth - paddleHeight, paddleY, paddleHeight, paddleWidth); 	// right
 	},
-	
-	
+
+
 	/*
 	 * draw a circle
 	 */
@@ -786,69 +787,69 @@ var browserBreakout = function() {
 	  drawContext.closePath();
 	  drawContext.fill();
 	},
-	
-	
+
+
 	/*
 	 * Draw method called by the loop
 	 */
 	draw = function() {
-		
+
 		// condition : detect game state
 		switch (gameState) {
-			
+
 			// show title screen?
-			case 'title' : case 'gameEnded' : case 'victory' : case 'noImages' : 
-			
-				// draw background (with initial fade in) 
+			case 'title' : case 'gameEnded' : case 'victory' : case 'noImages' :
+
+				// draw background (with initial fade in)
 				if (canvasTransparency < targetTransparency) {
 					canvasTransparency +=0.1;
 					drawBg();
-				
+
 				// bg is faded in, show title screen
 				} else {
-					
+
 					// show title
 					drawTitle();
-				
+
 					// show play now text
 					drawPlayNow();
-				
+
 					// display scores
 					drawTopScores();
-					
+
 					// display creds
 					drawCreds();
-					
+
 					// draw above text
 					drawBlocks();
-			
-			
+
+
 					// condition : if we've just lost, show message
 					if (gameState == 'gameEnded') {
-					
+
 						drawLoseMessage();
-				
-					// show VICTORY message	
+
+					// show VICTORY message
 					} else if (gameState == 'victory') {
-					
+
 						drawWinMessage();
-					
-					// show NO IMAGES message	
+
+					// show NO IMAGES message
 					} else if (gameState == 'noImages') {
-					
+
 						drawNoImagesMessage();
-					
+
 					}
 				}
-			
+
 			break;
-			
-			
+
+
 			// game is in progress?
-			case 'running' : 
-			
+			case 'running' :
+
 				drawBg();
-				
+
 				// draw ball
 				drawBall();
 
@@ -857,19 +858,19 @@ var browserBreakout = function() {
 
 				// draw images
 				drawImages();
-								
+
 				// draw paddles
 				drawPaddles();
-				
+
 				// if text needs drawing, draw it
 				drawBlocks();
-				
-				
+
+
 				// calculate game state
 				if (imagesRemaining == 0) {
 					updateGameState('victory');
 				}
-				
+
 				if (
 					ballX + ballDx + ballRadius > visibleWidth ||	// right
 					ballX + ballDx - ballRadius < 0 ||	// left
@@ -878,17 +879,17 @@ var browserBreakout = function() {
 				) {
 					updateGameState('gameEnded');
 				}
-			
-			
+
+
 			break;
 		}
 	},
-	
-	
+
+
 	/*
 	 * Debug
 	 * output debug messages
-	 * 
+	 *
 	 * @return void
 	 * @private
 	 */
@@ -904,34 +905,34 @@ var browserBreakout = function() {
 			console.log('----------------------------------------------------------------------------------');
 		}
 	},
-	
-	
+
+
 	 /*
 	 * initialisation method
 	 */
 	init = function(){
-		
+
 		debug('init()');
 
 
-		// fix browser CSS to disable scrolling			
+		// fix browser CSS to disable scrolling
 		hideOverflow();
-		
-		
+
+
 		// calculate browser positions
 		calculatePositions();
-		
+
 
 		// retrieve all images of a reasonable size
-		collectImages();	
+		collectImages();
 
 
 		// create canvas element
 		if (!canvas) {
 			createCanvas();
 		}
-		
-		
+
+
 		// set up listeners for keys and mouse...
 		document.onmousemove = function(e) {
 			onMouseMove(e);
@@ -947,25 +948,25 @@ var browserBreakout = function() {
 		};
 		document.onkeypress = function(e) {
 			onMouseClick(e);
-			
+
 			// stop browser scrolling on click
 			if (!e) { e = window.event; }
 			if (e.keyCode == 40 || e.keyCode == 38 || e.keyCode == 39 || e.keyCode == 37) {
 				return false;
 			}
-			
+
 			// escape or X - remove canvas
 			if (e.keyCode == 27 || e.keyCode == 120) {
 				canvas.parentNode.removeChild(canvas);
 				//return false;
-			}	
+			}
 		};
-		
-		
+
+
 		// draw!
-		drawInterval = setInterval(draw, 25);		
+		drawInterval = setInterval(draw, 25);
 	},
-	
+
 
 	/*
 	 * reset game (on browser resize)
@@ -985,39 +986,39 @@ var browserBreakout = function() {
 		}
 		reseting = false;
 	};
-	
-	
+
+
 	/*
 	 * restart on resize
 	 */
 	window.onresize = function() {
 		resetGame();
 	};
-	
-	
-	
-	
-	
+
+
+
+
+
 	/*
 	 * Canvas Letters - used for in-game text
 	 *
 	 * petegoodman.com
 	 */
 	var CanvasLetters = function(initOptions) {
-		
+
 		/*
 		 * Array of blocks to draw
 		 */
 		var blocks = [],
 		blockCount = 0,
-		
+
 		/*
 		 * current block drawing details
 		 */
 		currentX = 0,
 		currentY = 0,
 		currentBlock = 0,
-		lineCount = 1,	
+		lineCount = 1,
 
 		/*
 		 * Character block dimensions
@@ -1075,8 +1076,8 @@ var browserBreakout = function() {
 			'!': [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0],
 			'@': [0,1,1,1,0,1,0,0,0,1,1,0,1,1,1,1,0,1,0,1,1,0,1,1,0,1,0,0,0,1,0,1,1,1,0],
 			'&': [0,1,1,0,0,1,0,0,1,0,1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,1,0,0,1,0,0,1,1,0,1],
-			'.': [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,0], 
-			' ': [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] 
+			'.': [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,1,1,0],
+			' ': [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 		},
 
 
@@ -1117,16 +1118,16 @@ var browserBreakout = function() {
 				}
 			}
 		},
-		
-		
+
+
 		/*
 		 * condition : is this textBlock active?
 		 */
 		isActive = function() {
 			return options.active;
 		},
-		
-		
+
+
 		/*
 		 * condition : is this textBlock active?
 		 */
@@ -1136,8 +1137,8 @@ var browserBreakout = function() {
 				currentBlock = 0;
 			}
 		},
-		
-		
+
+
 		/*
 		 * condition : redraw new string
 		 */
@@ -1159,13 +1160,13 @@ var browserBreakout = function() {
 			currentBlock = 0;
 			blocks = [];
 			blockCount = 0;
-			
+
 			if (options.x < 0) {
 				currentX = visibleWidth - (options.blockSize*characterBlockHeight*(options.textString.length-1)) + options.x;
 			} else {
 				currentX = options.x + 0;
 			}
-			
+
 			if (options.y < 0) {
 				currentY = visibleHeight - options.clearance - (options.blockSize*characterBlockHeight) + options.y;
 			} else {
@@ -1224,7 +1225,7 @@ var browserBreakout = function() {
 
 
 		/*
-		 * 
+		 *
 		 */
 		calculateBlockPositions = function() {
 
@@ -1250,7 +1251,7 @@ var browserBreakout = function() {
 					// condition : is this word going to fit on the current line?
 					if (currentX + (options.blockSize * (characterBlockWidth*(nextSpacePosition-character))) + (options.clearance*(nextSpacePosition-character)) > canvas.width - options.clearance) {
 						newLineRequired = true;
-					} 
+					}
 
 
 					// condition : start a new line?
@@ -1279,7 +1280,7 @@ var browserBreakout = function() {
 							blocks.push({x:x,y:y,opacity:0});
 						}
 					}
-				} 
+				}
 			}
 
 			// condition : change order of appearing blocks
@@ -1313,7 +1314,7 @@ var browserBreakout = function() {
 		 *
 		 */
 		drawBlocks = function() {
-			
+
 			// normal direction, add blocks
 			var drawColour = options.blockColour;
 
@@ -1330,17 +1331,17 @@ var browserBreakout = function() {
 			};
 
 			// add one to loop
-			currentBlock++;			
+			currentBlock++;
 
 			// calculate whether to end the drawing
 			if (currentBlock == blockCount+10) {
-				
+
 				// remove this from the queue of to be drawn
 				debug('finished drawing ' + options.textString);
 			}
 		},
-		
-		
+
+
 		/*
 		 * Turn Hex into RGB, for block colour
 		 */
@@ -1349,9 +1350,9 @@ var browserBreakout = function() {
 		HexToG = function(h) {return parseInt((cutHex(h)).substring(2,4),16);},
 		HexToB = function(h) {return parseInt((cutHex(h)).substring(4,6),16);},
 		cutHex = function(h) {return (h.charAt(0)=='#') ? h.substring(1,7):h;},
-		
-		
-		
+
+
+
 		/*
 		 * initialisation method
 		 */
@@ -1366,7 +1367,7 @@ var browserBreakout = function() {
 			startLetters();
 
 		}();
-		
+
 
 		/*
 		 * expose public methods
@@ -1379,9 +1380,9 @@ var browserBreakout = function() {
 			updateString: updateString
 		};
 	};
-	
-	
+
+
 	// start the game!
 	init();
-	
+
 }();
