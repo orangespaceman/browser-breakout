@@ -3,7 +3,6 @@
  *
  * Thanks to http://billmill.org/static/canvastutorial/
  *
- * petegoodman.com
  */
 var browserBreakout = function() {
 
@@ -426,7 +425,7 @@ var browserBreakout = function() {
 	drawCreds = function() {
 		if (!textBlocks.creds) {
 			textBlocks.creds = new CanvasLetters({
-				textString:'petegoodman.com',
+				textString:'blah',
 				name:'creds',
 				x: -25,
 				y: -25,
@@ -1002,7 +1001,6 @@ var browserBreakout = function() {
 	/*
 	 * Canvas Letters - used for in-game text
 	 *
-	 * petegoodman.com
 	 */
 	var CanvasLetters = function(initOptions) {
 
